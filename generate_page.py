@@ -274,7 +274,7 @@ TEMPLATE = """<!DOCTYPE html>
       <span class="goal-light" aria-hidden="true"></span>
       NHL News Desk
     </div>
-    <div class="scoreboard-clock">{generated_at}</div>
+    <div class="scoreboard-clock" id="scoreboard-clock" data-generated="{generated_at_iso}">Loading...</div>
   </div>
 
   <div class="digest">
@@ -290,6 +290,24 @@ TEMPLATE = """<!DOCTYPE html>
 
 <script>
   const ARTICLES = {articles_json};
+
+  // Render the "last updated" clock in the *visitor's* local timezone,
+  // not the server's (the page is generated on a UTC server, but each
+  // viewer's browser knows their own local time).
+  (function renderClock() {{
+    const clockEl = document.getElementById('scoreboard-clock');
+    const iso = clockEl.getAttribute('data-generated');
+    const d = new Date(iso);
+    if (isNaN(d)) {{
+      clockEl.textContent = 'Unknown';
+      return;
+    }}
+    const formatted = d.toLocaleString(undefined, {{
+      weekday: 'short', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit'
+    }});
+    clockEl.textContent = formatted;
+  }})();
 
   const listEl = document.getElementById('article-list');
   const filtersEl = document.getElementById('filters');
@@ -408,7 +426,7 @@ def generate(output_path="dashboard.html"):
     articles_list = [dict(a) for a in articles]
 
     html = TEMPLATE.format(
-        generated_at=datetime.now().strftime("%a %b %d &middot; %I:%M %p"),
+        generated_at_iso=datetime.utcnow().isoformat() + "Z",
         digest_html=build_digest_html(digest_row),
         articles_json=json.dumps(articles_list),
     )
