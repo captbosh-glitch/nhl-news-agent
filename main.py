@@ -28,14 +28,20 @@ def main():
             )
             if today_articles:
                 print(f"  Generating digest from {len(today_articles)} article(s)...")
-                digest_text = curate.build_digest(today_articles)
-                if digest_text:
-                    db.save_digest(
-                        conn, curate.todays_date_str(), digest_text, len(today_articles)
-                    )
-                    print("  Digest saved.\n")
-                    print("--- Today's digest ---")
-                    print(digest_text)
+                try:
+                    digest_text = curate.build_digest(today_articles)
+                    if digest_text:
+                        db.save_digest(
+                            conn, curate.todays_date_str(), digest_text, len(today_articles)
+                        )
+                        print("  Digest saved.\n")
+                        print("--- Today's digest ---")
+                        print(digest_text)
+                except Exception as e:
+                    # Never let a digest failure (billing, rate limit, network,
+                    # etc.) take down article collection or the dashboard --
+                    # those should still complete even if this step fails.
+                    print(f"  [warn] Digest generation failed, skipping: {e}")
             else:
                 print("  No new articles today -- skipping digest.")
         else:
