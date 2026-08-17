@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NHL News Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0E13;
+    --panel: #121920;
+    --panel-hover: #182029;
+    --border: #232D38;
+    --ice: #4FC3F7;
+    --goal: #D62828;
+    --text: #E8EDF2;
+    --text-dim: #7C8B9B;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+  }
+
+  /* --- Scoreboard header (signature element) --- */
+  .scoreboard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 20px;
+    margin: 0 -20px 0;
+    background: linear-gradient(180deg, #0D131A 0%, #0A0E13 100%);
+    border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .scoreboard-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .goal-light {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--goal);
+    box-shadow: 0 0 8px 2px rgba(214, 40, 40, 0.7);
+    animation: pulse 1.8s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .goal-light { animation: none; }
+  }
+
+  .scoreboard-clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ice);
+    letter-spacing: 0.04em;
+  }
+
+  /* --- Digest hero --- */
+  .digest {
+    margin-top: 28px;
+    padding: 24px 24px 26px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .digest-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--ice);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .digest h1 {
+    font-family: 'Teko', sans-serif;
+    font-weight: 600;
+    font-size: 40px;
+    letter-spacing: 0.01em;
+    margin: 0 0 12px;
+    line-height: 0.95;
+    text-transform: uppercase;
+  }
+
+  .digest p {
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--text);
+    margin: 0 0 14px;
+    white-space: pre-line;
+  }
+
+  .digest-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .no-digest {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* --- Filter chips --- */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 24px 0 20px;
+  }
+
+  .chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    padding: 7px 13px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+  }
+
+  .chip:hover {
+    border-color: var(--ice);
+    color: var(--text);
+  }
+
+  .chip.active {
+    background: var(--ice);
+    border-color: var(--ice);
+    color: #0A0E13;
+    font-weight: 700;
+  }
+
+  /* --- Article list --- */
+  .section-label {
+    font-family: 'Teko', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 8px 0 12px;
+  }
+
+  .article {
+    display: block;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .article:hover {
+    background: var(--panel-hover);
+    border-color: var(--ice);
+  }
+
+  .article-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .article-title {
+    font-size: 15.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+
+  .article-summary {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .team-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(79, 195, 247, 0.12);
+    color: var(--ice);
+    font-size: 10.5px;
+    margin-left: 6px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    .digest h1 { font-size: 32px; }
+    .scoreboard { padding: 12px 16px; margin: 0 -16px; }
+    .wrap { padding: 0 16px 60px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="scoreboard">
+    <div class="scoreboard-left">
+      <span class="goal-light" aria-hidden="true"></span>
+      NHL News Desk
+    </div>
+    <div class="scoreboard-clock">Sun Aug 16 &middot; 09:07 PM</div>
+  </div>
+
+  <div class="digest">
+    <div class="digest-eyebrow">Today's Digest</div><h1>No digest yet</h1><div class="no-digest">Run main.py with ANTHROPIC_API_KEY set to generate a curated daily digest. Raw collected stories are still listed below.</div>
+  </div>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="section-label">Collected stories</div>
+  <div id="article-list"></div>
+
+</div>
+
+<script>
+  const ARTICLES = [{"title": "Flyers' Matvei Michkov Flexes Physique In New Social Media Post", "url": "https://sports.yahoo.com/articles/flyers-matvei-michkov-flexes-physique-213455898.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 21:34:55 +0000", "summary": "Silencing critics with a transformed frame, Michkov eyes a breakout contract year to lead Philadelphia back to contention.", "teams": "Flyers", "collected_at": "2026-08-17 01:07:45"}, {"title": "Canadiens Have A Prime PTO Target In This UFA Forward", "url": "https://sports.yahoo.com/articles/canadiens-prime-pto-target-ufa-210044892.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 21:00:44 +0000", "summary": "The Canadiens should consider taking a gamble on this remaining free agent.", "teams": "Canadiens", "collected_at": "2026-08-17 01:07:45"}, {"title": "Sabres Rights To 2021 Draftee In Limbo After Deadline Passes", "url": "https://sports.yahoo.com/articles/sabres-rights-2021-draftee-limbo-205934576.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 20:59:34 +0000", "summary": "Russian winger Stiven Sardarian scored 44 points as a senior at Michigan Tech last season.", "teams": "Sabres", "collected_at": "2026-08-17 01:07:45"}, {"title": "Former Vancouver Canucks Around The World: AHL Eastern Conference", "url": "https://sports.yahoo.com/articles/former-vancouver-canucks-around-world-200031356.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 20:00:31 +0000", "summary": "A look at some of the former Canucks around the world set to play in the AHL's Eastern Conference in 2026-27.", "teams": "Canucks", "collected_at": "2026-08-17 01:07:45"}, {"title": "Vasilevskiy among NHL Network\u2019s top 10 goalies", "url": "https://www.nhl.com/news/topic/top-players-right-now/nhl-current-players-ranked-top-10-goalies-2026", "source": "NHL.com", "published": "Mon, 17 Aug 2026 00:00:00 -0000", "summary": "Hellebuyck, Sorokin, Oettinger also named in preseason list", "teams": null, "collected_at": "2026-08-17 01:07:43"}, {"title": "Fayetteville Woodpeckers celebrate win with Storm Surge on hockey night", "url": "https://www.nhl.com/news/topic/short-shifts/hurricanes-minor-league-baseball-hockey-night", "source": "NHL.com", "published": "Sun, 16 Aug 2026 23:36:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-17 01:07:43"}, {"title": "Stankoven brings Stanley Cup to former school, hometown hospital", "url": "https://www.nhl.com/news/topic/summer-with-stanley/logan-stankoven-stanley-cup-hurricanes-kamloops", "source": "NHL.com", "published": "Sun, 16 Aug 2026 21:52:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-17 01:07:43"}, {"title": "Kim Kardashian shows off Devils hat on Hawaiian vacation", "url": "https://www.nhl.com/news/topic/short-shifts/kim-kardashian-new-jersey-devils-hat", "source": "NHL.com", "published": "Sun, 16 Aug 2026 21:10:00 -0000", "summary": null, "teams": "Devils", "collected_at": "2026-08-17 01:07:43"}, {"title": "Sabres Top 40 Prospects - #23", "url": "https://sports.yahoo.com/articles/sabres-top-40-prospects-23-194410713.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 19:44:10 +0000", "summary": "18-year-old Latvian has played in a pair of World Juniors for his country", "teams": "Sabres", "collected_at": "2026-08-16 20:23:15"}, {"title": "Marchand says he has had offseason surgery", "url": "https://www.nhl.com/news/florida-panthers-brad-marchand-says-he-has-had-offseason-surgery", "source": "NHL.com", "published": "Sun, 16 Aug 2026 01:09:01 -0000", "summary": "Panthers forward was shut down last season with lower-body injury with 19 games remaining", "teams": "Panthers", "collected_at": "2026-08-16 20:23:14"}, {"title": "Top prospects: Nashville Predators", "url": "https://www.nhl.com/news/topic/32-in-32/nashville-predators-top-prospects-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sun, 16 Aug 2026 04:00:00 -0000", "summary": "Martin looking to build off NHL debut; team hoping Cullen 'sleeper of the draft'", "teams": "Predators", "collected_at": "2026-08-16 20:23:14"}, {"title": "2026-27 preseason schedule to begin Sept. 19", "url": "https://www.nhl.com/news/2026-2027-preseason-nhl-schedule-to-begin-september-19-2026", "source": "NHL.com", "published": "Thu, 13 Aug 2026 16:00:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-16 20:23:14"}, {"title": "EXCLUSIVE: Price talks Canadiens' present, future", "url": "https://www.nhl.com/news/carey-price-excited-for-montreal-canadiens-future", "source": "NHL.com", "published": "Mon, 10 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Canadiens", "collected_at": "2026-08-16 20:23:14"}, {"title": "Fantasy preview: Nashville Predators", "url": "https://www.nhl.com/news/topic/32-in-32/nashville-predators-fantasy-projections-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sun, 16 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Predators", "collected_at": "2026-08-16 20:23:14"}, {"title": "Makar, Werenski among NHL Network\u2019s top defensemen", "url": "https://www.nhl.com/news/topic/top-players-right-now/nhl-current-players-ranked-top-20-defensemen-2026", "source": "NHL.com", "published": "Mon, 10 Aug 2026 00:00:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats outlook for Nashville Predators", "url": "https://www.nhl.com/news/topic/32-in-32/nashville-predators-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sun, 16 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Predators", "collected_at": "2026-08-16 20:23:14"}, {"title": "Fantasy top 250 ranks; season preview podcasts", "url": "https://www.nhl.com/news/topic/fantasy/nhl-fantasy-hockey-top-250-200-rankings-drafts-players-big-board-281505474", "source": "NHL.com", "published": "Wed, 12 Aug 2026 04:00:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-16 20:23:14"}, {"title": "2026-27 NHL Free Agent Tracker", "url": "https://www.nhl.com/news/topic/free-agency/free-agency-signings-nhl-2026-27", "source": "NHL.com", "published": "Thu, 13 Aug 2026 19:06:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-16 20:23:14"}, {"title": "Hurricanes win Stanley Cup with Game 6 shutout against Golden Knights", "url": "https://www.nhl.com/news/topic/playoffs/carolina-hurricanes-vegas-golden-knights-stanley-cup-final-game-6-recap-june-14-2026", "source": "NHL.com", "published": "Mon, 15 Jun 2026 05:42:00 -0000", "summary": null, "teams": "Hurricanes, Golden Knights", "collected_at": "2026-08-16 20:23:14"}, {"title": "Hurricanes hold off Golden Knights in Game 5, move within 1 win of Stanley Cup", "url": "https://www.nhl.com/news/topic/playoffs/vegas-golden-knights-carolina-hurricanes-stanley-cup-final-game-5-recap-june-11-2026", "source": "NHL.com", "published": "Fri, 12 Jun 2026 05:33:00 -0000", "summary": null, "teams": "Hurricanes, Golden Knights", "collected_at": "2026-08-16 20:23:14"}, {"title": "Staal scores 2, Hurricanes top Golden Knights in Game 4, even Stanley Cup Final", "url": "https://www.nhl.com/news/topic/playoffs/carolina-hurricanes-vegas-golden-knights-stanley-cup-final-game-4-recap-june-9-2026", "source": "NHL.com", "published": "Wed, 10 Jun 2026 05:17:00 -0000", "summary": null, "teams": "Hurricanes, Golden Knights", "collected_at": "2026-08-16 20:23:14"}, {"title": "Golden Knights recover for 2OT victory against Hurricanes in Game 3 of Cup Final", "url": "https://www.nhl.com/news/topic/playoffs/carolina-hurricanes-vegas-golden-knights-stanley-cup-final-game-3-recap-june-6-2026", "source": "NHL.com", "published": "Sun, 07 Jun 2026 06:47:00 -0000", "summary": null, "teams": "Hurricanes, Golden Knights", "collected_at": "2026-08-16 20:23:14"}, {"title": "Jarvis scores in OT, Hurricanes top Golden Knights in Game 2 to even Cup Final", "url": "https://www.nhl.com/news/topic/playoffs/vegas-golden-knights-carolina-hurricanes-stanley-cup-final-game-2-recap-june-4-2026", "source": "NHL.com", "published": "Fri, 05 Jun 2026 05:55:00 -0000", "summary": null, "teams": "Hurricanes, Golden Knights", "collected_at": "2026-08-16 20:23:14"}, {"title": "Hertl breaks tie late, Golden Knights edge Hurricanes in Game 1 of Cup Final", "url": "https://www.nhl.com/news/topic/playoffs/vegas-golden-knights-carolina-hurricanes-stanley-cup-final-game-1-recap-june-2-2026", "source": "NHL.com", "published": "Wed, 03 Jun 2026 05:25:00 -0000", "summary": null, "teams": "Hurricanes, Golden Knights", "collected_at": "2026-08-16 20:23:14"}, {"title": "Montreal Canadiens fantasy projections for 2026-27", "url": "https://www.nhl.com/news/topic/32-in-32/montreal-canadiens-fantasy-projections-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sat, 15 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Canadiens", "collected_at": "2026-08-16 20:23:14"}, {"title": "Minnesota Wild fantasy projections for 2026-27", "url": "https://www.nhl.com/news/topic/32-in-32/minnesota-wild-fantasy-projections-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Fri, 14 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Wild", "collected_at": "2026-08-16 20:23:14"}, {"title": "Fantasy hockey pool draft kit, cheat sheet", "url": "https://www.nhl.com/news/topic/Fantasy/nhl-fantasy-hockey-cheat-sheet-pools-draft-kit-282283006", "source": "NHL.com", "published": "Thu, 13 Aug 2026 04:00:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-16 20:23:14"}, {"title": "Los Angeles Kings fantasy projections for 2026-27", "url": "https://www.nhl.com/news/topic/32-in-32/los-angeles-kings-fantasy-projections-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Thu, 13 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Kings", "collected_at": "2026-08-16 20:23:14"}, {"title": "Florida Panthers fantasy projections for 2026-27", "url": "https://www.nhl.com/news/topic/32-in-32/florida-panthers-fantasy-projections-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Wed, 12 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Panthers", "collected_at": "2026-08-16 20:23:14"}, {"title": "Edmonton Oilers fantasy projections for 2026-27", "url": "https://www.nhl.com/news/topic/32-in-32/edmonton-oilers-fantasy-projections-2026-27-32-in-32", "source": "NHL.com", "published": "Tue, 11 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Oilers", "collected_at": "2026-08-16 20:23:14"}, {"title": "Fantasy hockey top 100 forward rankings", "url": "https://www.nhl.com/news/topic/Fantasy/nhl-fantasy-hockey-top-100-forward-rankings-pools-282775028", "source": "NHL.com", "published": "Mon, 10 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Kings", "collected_at": "2026-08-16 20:23:14"}, {"title": "Detroit Red Wings fantasy projections for 2026-27", "url": "https://www.nhl.com/news/topic/32-in-32/detroit-red-wings-fantasy-projections-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Mon, 10 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Red Wings", "collected_at": "2026-08-16 20:23:14"}, {"title": "Dallas Stars fantasy projections for 2026-27", "url": "https://www.nhl.com/news/topic/32-in-32/dallas-stars-fantasy-projections-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sun, 09 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Stars", "collected_at": "2026-08-16 20:23:14"}, {"title": "Columbus Blue Jackets fantasy projections for 2026-27", "url": "https://www.nhl.com/news/topic/32-in-32/columbus-blue-jackets-fantasy-projections-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sat, 08 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Blue Jackets", "collected_at": "2026-08-16 20:23:14"}, {"title": "Colorado Avalanche fantasy projections for 2026-27", "url": "https://www.nhl.com/news/topic/32-in-32/colorado-avalanche-fantasy-projections-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Fri, 07 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Avalanche", "collected_at": "2026-08-16 20:23:14"}, {"title": "Chicago Blackhawks fantasy projections for 2026-27", "url": "https://www.nhl.com/news/topic/32-in-32/chicago-blackhawks-fantasy-projections-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Thu, 06 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Blackhawks", "collected_at": "2026-08-16 20:23:14"}, {"title": "Fantasy hockey top 10 rookie rankings for 2026-27", "url": "https://www.nhl.com/news/fantasy-hockey-top-10-rookie-rankings-for-2025-26-season", "source": "NHL.com", "published": "Wed, 05 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Kings", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Montreal Canadiens", "url": "https://www.nhl.com/news/topic/32-in-32/montreal-canadiens-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sat, 15 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Canadiens", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Minnesota Wild", "url": "https://www.nhl.com/news/topic/32-in-32/minnesota-wild-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Fri, 14 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Wild", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Los Angeles Kings", "url": "https://www.nhl.com/news/topic/32-in-32/los-angeles-kings-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Thu, 13 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Kings", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Florida Panthers", "url": "https://www.nhl.com/news/topic/32-in-32/florida-panthers-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Wed, 12 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Panthers", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Edmonton Oilers", "url": "https://www.nhl.com/news/topic/32-in-32/edmonton-oilers-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Mon, 10 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Oilers", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Detroit Red Wings", "url": "https://www.nhl.com/news/topic/32-in-32/detroit-red-wings-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Mon, 10 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Red Wings", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Dallas Stars", "url": "https://www.nhl.com/news/topic/32-in-32/dallas-stars-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sun, 09 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Stars", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Columbus Blue Jackets", "url": "https://www.nhl.com/news/topic/32-in-32/columbus-blue-jackets-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sat, 08 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Blue Jackets", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Colorado Avalanche", "url": "https://www.nhl.com/news/topic/32-in-32/colorado-avalanche-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Fri, 07 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Avalanche", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Chicago Blackhawks", "url": "https://www.nhl.com/news/topic/32-in-32/chicago-blackhawks-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Thu, 06 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Blackhawks", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Carolina Hurricanes", "url": "https://www.nhl.com/news/topic/32-in-32/carolina-hurricanes-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Wed, 05 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Hurricanes", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Calgary Flames", "url": "https://www.nhl.com/news/topic/32-in-32/calgary-flames-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Tue, 04 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Flames", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Buffalo Sabres", "url": "https://www.nhl.com/news/topic/32-in-32/buffalo-sabres-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Mon, 03 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Sabres", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Boston Bruins", "url": "https://www.nhl.com/news/topic/32-in-32/boston-bruins-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sun, 02 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Bruins", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL EDGE stats 2026-27 season outlook for Anaheim Ducks", "url": "https://www.nhl.com/news/topic/32-in-32/anaheim-ducks-nhl-edge-stats-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sat, 01 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Ducks", "collected_at": "2026-08-16 20:23:14"}, {"title": "Jets add Skinner as backup goalie, Ferraro to shore up defense", "url": "https://www.nhl.com/news/topic/team-resets/winnipeg-jets-roster-changes-for-2026-27-season", "source": "NHL.com", "published": "Thu, 30 Jul 2026 04:00:00 -0000", "summary": null, "teams": "Jets", "collected_at": "2026-08-16 20:23:14"}, {"title": "Capitals have Cup aspirations after adding Tuch, Kyrou, Jenner", "url": "https://www.nhl.com/news/topic/team-resets/washington-capitals-roster-changes-for-2026-27-season", "source": "NHL.com", "published": "Thu, 30 Jul 2026 04:00:00 -0000", "summary": null, "teams": "Capitals", "collected_at": "2026-08-16 20:23:14"}, {"title": "Islanders announce 8 finalists for 3rd jersey contest", "url": "https://www.nhl.com/news/topic/short-shifts/islanders-release-final-8-concepts-of-3rd-jersey-competition", "source": "NHL.com", "published": "Wed, 12 Aug 2026 16:03:00 -0000", "summary": null, "teams": "Islanders", "collected_at": "2026-08-16 20:23:14"}, {"title": "Martinook rides with Stanley Cup in Corvette to hometown community event", "url": "https://www.nhl.com/news/topic/summer-with-stanley/jordan-martinook-stanley-cup-ride-in-corvette-leduc", "source": "NHL.com", "published": "Wed, 12 Aug 2026 00:08:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-16 20:23:14"}, {"title": "Jarvis goes full circle in Winnipeg during day with Stanley Cup", "url": "https://www.nhl.com/news/topic/summer-with-stanley/seth-jarvis-goes-to-winnipeg-during-day-with-stanley-cup", "source": "NHL.com", "published": "Tue, 11 Aug 2026 16:42:00 -0000", "summary": null, "teams": "Jets", "collected_at": "2026-08-16 20:23:14"}, {"title": "NHL Summer Sizzle Workout Edition: Damon Severson", "url": "https://www.nhl.com/news/topic/short-shifts/nhl-summer-sizzle-workout-edition-damon-severson", "source": "NHL.com", "published": "Mon, 10 Aug 2026 18:39:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-16 20:23:14"}, {"title": "Staal brings Stanley Cup to pediatric hospital in hometown of Thunder Bay", "url": "https://www.nhl.com/news/topic/short-shifts/hurricanes-jordan-staal-brings-stanley-cup-hometown", "source": "NHL.com", "published": "Sun, 09 Aug 2026 23:29:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-16 20:23:14"}, {"title": "Hall brings Stanley Cup to Muskoka cottage", "url": "https://www.nhl.com/news/topic/summer-with-stanley/taylor-hall-brings-stanley-cup-to-muskoka-cottage", "source": "NHL.com", "published": "Fri, 07 Aug 2026 20:56:00 -0000", "summary": null, "teams": null, "collected_at": "2026-08-16 20:23:14"}, {"title": "Duchene keeping faith in Stars, GM after early playoff exit", "url": "https://www.nhl.com/news/matt-duchene-keeping-faith-in-dallas-stars-after-early-playoff-exit", "source": "NHL.com", "published": "Fri, 07 Aug 2026 22:01:00 -0000", "summary": null, "teams": "Stars", "collected_at": "2026-08-16 20:23:14"}, {"title": "Sillinger ready to help Blue Jackets end playoff drought", "url": "https://www.nhl.com/news/cole-sillinger-ready-to-help-columbus-blue-jackets-end-playoff-drought", "source": "NHL.com", "published": "Wed, 29 Jul 2026 22:32:53 -0000", "summary": null, "teams": "Blue Jackets", "collected_at": "2026-08-16 20:23:14"}, {"title": "MacFarland settled in as Predators GM after 'whirlwind' start", "url": "https://www.nhl.com/news/chris-macfarland-settled-in-after-whirlwind-start-with-nashville-predators", "source": "NHL.com", "published": "Wed, 29 Jul 2026 21:54:11 -0000", "summary": null, "teams": "Predators", "collected_at": "2026-08-16 20:23:14"}, {"title": "Perry extra motivated by son, 'stoked' to make another run with Kings", "url": "https://www.nhl.com/news/corey-perry-stoked-for-another-los-angeles-run-alongside-son", "source": "NHL.com", "published": "Wed, 29 Jul 2026 17:19:13 -0000", "summary": null, "teams": "Kings", "collected_at": "2026-08-16 20:23:14"}, {"title": "Sharks 'going to take another step' this season, Misa says", "url": "https://www.nhl.com/news/san-jose-going-to-take-another-step-michael-misa-says", "source": "NHL.com", "published": "Tue, 28 Jul 2026 18:08:32 -0000", "summary": null, "teams": "Sharks", "collected_at": "2026-08-16 20:23:14"}, {"title": "Inside look at Nashville Predators", "url": "https://www.nhl.com/news/topic/32-in-32/nashville-predators-inside-look-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sun, 16 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Predators", "collected_at": "2026-08-16 20:23:14"}, {"title": "3 questions facing Nashville Predators", "url": "https://www.nhl.com/news/topic/32-in-32/nashville-predators-three-questions-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sun, 16 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Predators", "collected_at": "2026-08-16 20:23:14"}, {"title": "3 questions facing Florida Panthers", "url": "https://www.nhl.com/news/topic/32-in-32/florida-panthers-three-questions-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sun, 16 Aug 2026 01:20:00 -0000", "summary": null, "teams": "Panthers", "collected_at": "2026-08-16 20:23:14"}, {"title": "Inside look at Florida Panthers", "url": "https://www.nhl.com/news/topic/32-in-32/florida-panthers-inside-look-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sun, 16 Aug 2026 01:10:00 -0000", "summary": null, "teams": "Panthers", "collected_at": "2026-08-16 20:23:14"}, {"title": "Gainey's $100 suit stitched into Canadiens' Stanley Cup lore", "url": "https://www.nhl.com/news/bob-gainey-100-dollar-suit-stitched-into-canadiens-stanley-cup-lore", "source": "NHL.com", "published": "Sat, 15 Aug 2026 14:49:10 -0000", "summary": null, "teams": "Canadiens", "collected_at": "2026-08-16 20:23:14"}, {"title": "Inside look at Montreal Canadiens", "url": "https://www.nhl.com/news/topic/32-in-32/montreal-canadiens-inside-look-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sat, 15 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Canadiens", "collected_at": "2026-08-16 20:23:14"}, {"title": "3 questions facing Montreal Canadiens", "url": "https://www.nhl.com/news/topic/32-in-32/montreal-canadiens-three-questions-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sat, 15 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Canadiens", "collected_at": "2026-08-16 20:23:14"}, {"title": "Top prospects for Montreal Canadiens", "url": "https://www.nhl.com/news/topic/32-in-32/montreal-canadiens-top-prospects-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Sat, 15 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Canadiens", "collected_at": "2026-08-16 20:23:14"}, {"title": "Inside look at Minnesota Wild", "url": "https://www.nhl.com/news/topic/32-in-32/minnesota-wild-inside-look-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Fri, 14 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Wild", "collected_at": "2026-08-16 20:23:14"}, {"title": "3 questions facing Minnesota Wild", "url": "https://www.nhl.com/news/topic/32-in-32/minnesota-wild-three-questions-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Fri, 14 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Wild", "collected_at": "2026-08-16 20:23:14"}, {"title": "Top prospects for Minnesota Wild", "url": "https://www.nhl.com/news/topic/32-in-32/minnesota-wild-top-prospects-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Fri, 14 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Wild", "collected_at": "2026-08-16 20:23:14"}, {"title": "Werenski 'would have no issues' committing to Blue Jackets for long term", "url": "https://www.nhl.com/news/zach-werenski-would-have-no-issues-committing-to-columbus", "source": "NHL.com", "published": "Thu, 13 Aug 2026 17:49:22 -0000", "summary": null, "teams": "Blue Jackets", "collected_at": "2026-08-16 20:23:14"}, {"title": "Top prospects for Los Angeles Kings", "url": "https://www.nhl.com/news/topic/32-in-32/los-angeles-kings-top-prospects-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Thu, 13 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Kings", "collected_at": "2026-08-16 20:23:14"}, {"title": "Inside look at Los Angeles Kings", "url": "https://www.nhl.com/news/topic/32-in-32/los-angeles-kings-inside-look-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Thu, 13 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Kings", "collected_at": "2026-08-16 20:23:14"}, {"title": "3 questions facing Los Angeles Kings", "url": "https://www.nhl.com/news/topic/32-in-32/los-angeles-kings-three-questions-for-2026-27-season-32-in-32", "source": "NHL.com", "published": "Thu, 13 Aug 2026 04:00:00 -0000", "summary": null, "teams": "Kings", "collected_at": "2026-08-16 20:23:14"}, {"title": "Nelson looking forward after \u2018crazy year\u2019 with Avalanche, Olympic gold", "url": "https://www.nhl.com/news/brock-nelson-looking-forward-after-crazy-year-with-colorado-avalanche-olympic-gold", "source": "NHL.com", "published": "Thu, 13 Aug 2026 01:21:21 -0000", "summary": null, "teams": "Avalanche", "collected_at": "2026-08-16 20:23:14"}, {"title": "Slafkovsky Explained Canadiens Players\u2019 Train of Thought", "url": "https://sports.yahoo.com/articles/slafkovsky-explained-canadiens-players-train-193022504.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 19:30:22 +0000", "summary": "Montreal Canadiens forward Juraj Slafkovsky had something interesting to say at the Hockey Player of the Year gala in Slovakia last week...", "teams": "Canadiens", "collected_at": "2026-08-16 19:59:02"}, {"title": "Philipp Grubauer Gives Back To The Community At Seattle Hockey Camp", "url": "https://sports.yahoo.com/articles/philipp-grubauer-gives-back-community-181846811.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 18:18:46 +0000", "summary": "As the offseason wraps up, Kraken goaltender Philipp Grubauer is back in Seattle and participating in a hockey camp with 50 young goaltenders. \u200b", "teams": "Kraken", "collected_at": "2026-08-16 19:46:47"}, {"title": "Meet Leo Luongo, New Head of Goaltending Excellence", "url": "https://sports.yahoo.com/articles/meet-leo-luongo-head-goaltending-180000357.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 18:00:00 +0000", "summary": "The Devils have overhauled their goaltending department.", "teams": "Devils", "collected_at": "2026-08-16 19:46:47"}, {"title": "Ten Years Later: The Story of Senators First-Round Pick Logan Brown", "url": "https://sports.yahoo.com/articles/ten-years-later-story-senators-164945012.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 16:49:45 +0000", "summary": "We look back at the Senators' 2016 drafting of Logan Brown at 11th overall and what's happened since then.", "teams": "Senators", "collected_at": "2026-08-16 19:46:47"}, {"title": "The Hockey News Sunday Recap: Columbus Blue Jackets", "url": "https://sports.yahoo.com/articles/hockey-news-sunday-recap-columbus-160021331.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 16:00:21 +0000", "summary": "Did you miss anything from the past week at The Hockey News - Columbus Blue Jackets? If you did, we have you covered with the Sunday Recap. Click on each card below to read the stories from the past week.", "teams": "Blue Jackets", "collected_at": "2026-08-16 19:46:47"}, {"title": "46 Days Until Opening Night: The History Of Jersey #46", "url": "https://sports.yahoo.com/articles/46-days-until-opening-night-130031503.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 13:00:31 +0000", "summary": "The Columbus Blue Jackets have 46 days until opening night at Nationwide Arena. Today, we look at the history of jersey #46.", "teams": "Blue Jackets", "collected_at": "2026-08-16 19:46:47"}, {"title": "Vancouver Canucks 2026\u201327 Player Preview: Jonathan Lekkerim\u00e4ki", "url": "https://sports.yahoo.com/articles/vancouver-canucks-2026-27-player-120036184.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 12:00:36 +0000", "summary": "A preview of Canucks forward Jonathan Lekkerim\u00e4ki's 2026-27 season.", "teams": "Canucks", "collected_at": "2026-08-16 19:46:47"}, {"title": "Weekly Cupcakes: Meet Cale Makar Today!", "url": "https://sports.yahoo.com/articles/weekly-cupcakes-meet-cale-makar-120000447.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 12:00:00 +0000", "summary": "Colorado Avalanche News News Around the League", "teams": "Avalanche", "collected_at": "2026-08-16 19:46:47"}, {"title": "Canadiens Can Forget About Hage, For Now", "url": "https://sports.yahoo.com/articles/canadiens-forget-hage-now-110005654.html", "source": "Yahoo Sports NHL", "published": "Sun, 16 Aug 2026 11:00:05 +0000", "summary": "Montreal Canadiens' prospect Michael Hage's coach, Brandon Naurato, was interviewed on the Basu and Godin Notebook this past week, and he had some interesting things to say.", "teams": "Canadiens", "collected_at": "2026-08-16 19:46:47"}, {"title": "Sabres Grades: Defenseman Byram Took Step Forward In His Final Season Before Blockbuster Trade To Blackhawks", "url": "https://sports.yahoo.com/articles/sabres-grades-defenseman-byram-took-230602003.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 23:06:02 +0000", "summary": "TheHockeyNews.com's annual series in which we hand out grades for Buffalo Sabres players continues with this file on now-former Sabres D-man Bowen Byram. Buffalo got a solid trade package for Byram \u2013 but the blueliner still has room to grow his game, even if he now will be growing it in Chicago.", "teams": "Sabres, Blackhawks", "collected_at": "2026-08-16 19:46:47"}, {"title": "Former Vancouver Canucks Around The World: NHL Metropolitan Division", "url": "https://sports.yahoo.com/articles/former-vancouver-canucks-around-world-223005841.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 22:30:05 +0000", "summary": "A look at some of the former Canucks around the world set to play in the Metropolitan Division in 2026-27.", "teams": "Canucks", "collected_at": "2026-08-16 19:46:47"}, {"title": "Penguins New Forward Ready For Breakout Year", "url": "https://sports.yahoo.com/articles/penguins-forward-ready-breakout-200540422.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 20:05:40 +0000", "summary": "Keep an eye on this Penguins forward next season.", "teams": "Penguins", "collected_at": "2026-08-16 19:46:47"}, {"title": "All Eyes Should Be On This Sabres Breakout Candidate", "url": "https://sports.yahoo.com/articles/eyes-sabres-breakout-candidate-195359526.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 19:53:59 +0000", "summary": "Louis Crevier has the potential to hit a new level this season.", "teams": "Sabres", "collected_at": "2026-08-16 19:46:47"}, {"title": "Canadiens: Things Are Heating Up In Brossard", "url": "https://sports.yahoo.com/articles/canadiens-things-heating-brossard-193021889.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 19:30:21 +0000", "summary": "Montreal Canadiens players are starting to return to town even if training camp is still some way away.", "teams": "Canadiens", "collected_at": "2026-08-16 19:46:47"}, {"title": "Can Mike Babcock Coach Trent Frederic Back To Relavance", "url": "https://sports.yahoo.com/articles/mike-babcock-coach-trent-frederic-191933293.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 19:19:33 +0000", "summary": "There was a pretty clear idea of what Trent Frederic was supposed to be when the Edmonton Oilers brought him in.", "teams": "Oilers", "collected_at": "2026-08-16 19:46:47"}, {"title": "Simon Edvinsson\u2019s Agent Breaks Silence As Red Wings Await New GM", "url": "https://sports.yahoo.com/articles/edvinsson-agent-breaks-silence-red-173304304.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 17:33:04 +0000", "summary": "Detroit Red Wings defenseman Simon Edvinsson remains a restricted free agent while the club searches for its next general manager.", "teams": "Red Wings", "collected_at": "2026-08-16 19:46:47"}, {"title": "Where Do The Sabres Atlantic Division Rivals Stand? - Toronto Maple Leafs", "url": "https://sports.yahoo.com/articles/where-sabres-atlantic-division-rivals-154613840.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 15:46:13 +0000", "summary": "Toronto finished with a 32-36-14 record, in last place in the Atlantic Division", "teams": "Sabres, Maple Leafs", "collected_at": "2026-08-16 19:46:47"}, {"title": "Sabres Top 40 Prospects - #24", "url": "https://sports.yahoo.com/articles/sabres-top-40-prospects-24-141918706.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 14:19:18 +0000", "summary": "23-year-old former NCAA champion split time between the ECHL and AHL Rochester last season", "teams": "Sabres", "collected_at": "2026-08-16 19:46:47"}, {"title": "47 Days Until Opening Night: The History Of Jersey #47", "url": "https://sports.yahoo.com/articles/47-days-until-opening-night-132002865.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 13:20:02 +0000", "summary": "The Columbus Blue Jackets have 47 days until opening night at Nationwide Arena. Today, we look at the history of jersey #47.", "teams": "Blue Jackets", "collected_at": "2026-08-16 19:46:47"}, {"title": "Sens Nation Podcast: The Draft Day Trade Offers The Senators Rejected", "url": "https://sports.yahoo.com/articles/sens-nation-podcast-draft-day-131944068.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 13:19:44 +0000", "summary": "We discuss the behind-the-scenes look the Sens gave us on draft night, Carter Yakemchuk\u2019s chances of making the team, and what's up with the arena plans.", "teams": "Senators", "collected_at": "2026-08-16 19:46:47"}, {"title": "Flyers Have Interesting Trade Target to Consider in Former Sharks 1st-Round Pick", "url": "https://sports.yahoo.com/articles/flyers-interesting-trade-target-consider-110004006.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 11:00:04 +0000", "summary": "The Flyers can get creative to find more talented depth at the center position.", "teams": "Flyers, Sharks", "collected_at": "2026-08-16 19:46:47"}, {"title": "What To Expect From Canadiens\u2019 Speedy Winger This Season", "url": "https://sports.yahoo.com/articles/expect-canadiens-speedy-winger-season-110004796.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 11:00:04 +0000", "summary": "Montreal Canadiens' speedy winger Alex Newhook played an important role in the playoffs, and it's now time for him to build up on that and prove to management that he deserves a new contract at the end of the season.", "teams": "Canadiens", "collected_at": "2026-08-16 19:46:47"}, {"title": "Maple Leafs NHL Prospect Ranking: No. 9, Tyler Hopkins", "url": "https://sports.yahoo.com/articles/maple-leafs-nhl-prospect-ranking-110004887.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 11:00:04 +0000", "summary": "Campbellville, Ont., native and Guelph Storm center Tyler Hopkins ranks No. 9 in THN's Toronto Maple Leafs prospect ranking.", "teams": "Maple Leafs", "collected_at": "2026-08-16 19:46:47"}, {"title": "The five Penguins players I\u2019m most curious about, 2026-27", "url": "https://sports.yahoo.com/articles/five-penguins-players-m-most-100000381.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 10:00:00 +0000", "summary": "Last year\u2019s most curious list featured some positive surprises (Arturs Silovs, Tommy Novak) and some running in place (Owen Pickering, Ville Koivunen, Tristan Broz) and a little of both (Avery Hayes). That didn\u2019t even include some of the most curious seasons in store for people like Justin Brazeau, Ryan Shea, Parker Wotherspoon and Anthony Mantha, [\u2026]", "teams": "Penguins", "collected_at": "2026-08-16 19:46:47"}, {"title": "Pucks N'at Podcast: Are Take-A-Chance Contracts Worth The Risk In A Rising Cap Environment?", "url": "https://sports.yahoo.com/articles/pucks-nat-podcast-chance-contracts-044807482.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 04:48:07 +0000", "summary": "In this clip from Pucks N'at Podcast, THN - Pittsburgh Penguins editors Kelsey Surmacz and Hunter Hodies discuss the merits of take-a-chance contracts like the Koivunen one given the rising cap and whether or not other players should receive them.", "teams": "Penguins", "collected_at": "2026-08-16 19:46:47"}, {"title": "Top-20 Penguins' Prospects 2026, No. 11: Newly Drafted Defenseman Has High Intrigue", "url": "https://sports.yahoo.com/articles/top-20-penguins-prospects-2026-035351424.html", "source": "Yahoo Sports NHL", "published": "Sat, 15 Aug 2026 03:53:51 +0000", "summary": "Next up on THN's Top-20 Penguins' Prospects list at No. 11 is a left blueliner new to the system who has shown some pretty high offensive upside and who could fill a glaring positional need for the Penguins in the future.", "teams": "Penguins", "collected_at": "2026-08-16 19:46:47"}, {"title": "Looking At Patrik Laine As A Potential Late-Summer Addition For Blackhawks", "url": "https://sports.yahoo.com/articles/looking-patrik-laine-potential-summer-212122973.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 21:21:22 +0000", "summary": "Could Patrik Laine be someone that the Chicago Blackhawks take a risk on ahead of training camp?", "teams": "Blackhawks", "collected_at": "2026-08-16 19:46:47"}, {"title": "Valeri Nichushkin Drops A Bombshell On The Avalanche: \u201cOne Of The Oldest Teams In The League\u201d", "url": "https://sports.yahoo.com/articles/valeri-nichushkin-drops-bombshell-avalanche-203341462.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 20:33:41 +0000", "summary": "Valeri Nichushkin offered a revealing look at how much the Avalanche have changed since their 2022 Stanley Cup run, pointing directly to an aging core and explaining why he doesn't view his move to Columbus as a step backward.", "teams": "Blue Jackets, Avalanche", "collected_at": "2026-08-16 19:46:47"}, {"title": "Top 10 Devils Prospects Entering Late Stages Of Off-Season", "url": "https://sports.yahoo.com/articles/top-10-devils-prospects-entering-203325923.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 20:33:25 +0000", "summary": "The New Jersey Devils' farm system isn't as good as it was a few years ago, but there are prospects for the organization to be excited about.", "teams": "Devils", "collected_at": "2026-08-16 19:46:47"}, {"title": "Tij Iginla Has A Clear Path To The Utah Mammoth\u2019s Opening Night Roster", "url": "https://sports.yahoo.com/articles/tij-iginla-clear-path-utah-201550967.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 20:15:50 +0000", "summary": "Tij Iginla believes he\u2019s ready for the NHL, and the Utah Mammoth may have a difficult decision to make when training camp arrives.", "teams": null, "collected_at": "2026-08-16 19:46:47"}, {"title": "Maple Leafs Reveal 'Remix Nights,' Are New NHL Jerseys On The Way For 2026-27?", "url": "https://sports.yahoo.com/articles/maple-leafs-reveal-remix-nights-182601660.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 18:26:01 +0000", "summary": "The Toronto Maple Leafs have unveiled their theme nights for the 2026-27 season, including nine 'Remix Nights'. Are new NHL jerseys on the way for the Leafs this coming season?", "teams": "Maple Leafs", "collected_at": "2026-08-16 19:46:47"}, {"title": "Former Blackhawks Defenseman Still Looking For A New Home", "url": "https://sports.yahoo.com/articles/former-blackhawks-defenseman-still-looking-173805546.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 17:38:05 +0000", "summary": "Will this former Blackhawks defenseman get signed before the start of the season?", "teams": "Blackhawks", "collected_at": "2026-08-16 19:46:47"}, {"title": "Former Hurricane Looks To Be Done In NHL", "url": "https://sports.yahoo.com/articles/former-hurricane-looks-done-nhl-164933048.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 16:49:33 +0000", "summary": "After 1,110 games and 379 goals, former Calder Trophy winner Jeff Skinner is heading to Switzerland, likely signaling the end of his 16-season NHL career.", "teams": null, "collected_at": "2026-08-16 19:46:47"}, {"title": "Red Wings Face Roster Turnover, But Losses May Not Be as Severe as They Appear", "url": "https://sports.yahoo.com/articles/red-wings-face-roster-turnover-161253830.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 16:12:53 +0000", "summary": "Detroit replaces aging icons with gritty youth and calculated acquisitions, betting that fresh legs and internal growth can finally snap the franchise's decade-long playoff drought.", "teams": "Red Wings", "collected_at": "2026-08-16 19:46:47"}, {"title": "Flyers return most of defense, but two youngsters are pushing", "url": "https://sports.yahoo.com/articles/flyers-return-most-defense-two-154546571.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 15:45:46 +0000", "summary": "David Jiricek and Oliver Bonk are two youngsters vying for jobs on the Flyers' defense.", "teams": "Flyers", "collected_at": "2026-08-16 19:46:47"}, {"title": "Why Joonas Korpisalo Has An Edge Over Dylan Garand To Secure Rangers' Backup Goaltending Role", "url": "https://sports.yahoo.com/articles/why-joonas-korpisalo-edge-over-154445833.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 15:44:45 +0000", "summary": "We all know Igor Shesterkin will be the New York Rangers\u2019 starting goaltender, but who will take on the backup position?", "teams": "Rangers", "collected_at": "2026-08-16 19:46:47"}, {"title": "What Does Canadiens\u2019 Kapanen Have In Store For Sophomore Season?", "url": "https://sports.yahoo.com/articles/does-canadiens-kapanen-store-sophomore-153024768.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 15:30:24 +0000", "summary": "Montreal Canadiens' rookie Oliver Kapanen didn't exactly finish his first season on a high, but will he be able to bounce back as a sophomore?", "teams": "Canadiens", "collected_at": "2026-08-16 19:46:47"}, {"title": "Former Oiler Signs One-Year Deal In Switzerland", "url": "https://sports.yahoo.com/articles/former-oiler-signs-one-deal-153011120.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 15:30:11 +0000", "summary": "After sixteen NHL seasons, veteran sniper Jeff Skinner heads overseas to revitalize his career, bringing over 370 professional goals to EHC Biel-Bienne following a challenging stint in California.", "teams": null, "collected_at": "2026-08-16 19:46:47"}, {"title": "Former Sabre Skinner Signs In Switzerland", "url": "https://sports.yahoo.com/articles/former-sabre-skinner-signs-switzerland-152726328.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 15:27:26 +0000", "summary": "34-year-old veteran forward played 32 games with San Jose last season", "teams": "Sharks", "collected_at": "2026-08-16 19:46:47"}, {"title": "Former Flyers Stars to Feature in NHL Legend's Farewell Game", "url": "https://sports.yahoo.com/articles/former-flyers-stars-feature-nhl-150403724.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 15:04:03 +0000", "summary": "Iconic Flyers alumni Mark Recchi and Jaromir Jagr, among others, reunite in Slovakia to celebrate Zdeno Chara\u2019s legendary career.", "teams": "Flyers, Stars", "collected_at": "2026-08-16 19:46:47"}, {"title": "Sabres Top 40 Prospects #25", "url": "https://sports.yahoo.com/articles/sabres-top-40-prospects-25-145948839.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 14:59:48 +0000", "summary": "19-year-old blueliner scored 56 points for Newfoundland in the QMJHL last season", "teams": "Sabres", "collected_at": "2026-08-16 19:46:47"}, {"title": "48 Days Until Opening Night: The History Of Jersey #48", "url": "https://sports.yahoo.com/articles/48-days-until-opening-night-123831607.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 12:38:31 +0000", "summary": "The Columbus Blue Jackets have 48 days until opening night at Nationwide Arena. Today, we look at the history of jersey #48.", "teams": "Blue Jackets", "collected_at": "2026-08-16 19:46:47"}, {"title": "PensBurgh Top-25 Under 25: No. 11 Hendrix Lapierre", "url": "https://sports.yahoo.com/articles/pensburgh-top-25-under-25-100400340.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 10:04:00 +0000", "summary": "PensBurgh\u2019s 2026 edition of the Top 25 Under 25 countdown rolls on with Hendrix Lapierre, a 24-year-old forward who gets a fresh start with the Pittsburgh Penguins in the hopes he can blossom the way a few other young players have in recent seasons. Catch up on the previous entries for this year: Pensburgh Top [\u2026]", "teams": "Penguins", "collected_at": "2026-08-16 19:46:47"}, {"title": "Hurricanes goalie Brandon Bussi taking Stanley Cup to LI arena where it all began for him", "url": "https://sports.yahoo.com/articles/hurricanes-goalie-brandon-bussi-takes-032607401.html", "source": "Yahoo Sports NHL", "published": "Fri, 14 Aug 2026 03:26:07 +0000", "summary": "Lord Stanley\u2019s hardware is headed to the island.", "teams": "Hurricanes", "collected_at": "2026-08-16 19:46:47"}, {"title": "Penguins Have PTO Target To Consider In Veteran Defenseman", "url": "https://sports.yahoo.com/articles/penguins-pto-target-consider-veteran-233117470.html", "source": "Yahoo Sports NHL", "published": "Thu, 13 Aug 2026 23:31:17 +0000", "summary": "The Penguins should consider taking a flier on this defenseman with a PTO.", "teams": "Penguins", "collected_at": "2026-08-16 19:46:47"}, {"title": "Peter Laviolette Outlined What The Kings Must Do Without Anze Kopitar", "url": "https://sports.yahoo.com/articles/peter-laviolette-outlined-kings-must-230009568.html", "source": "Yahoo Sports NHL", "published": "Thu, 13 Aug 2026 23:00:09 +0000", "summary": "Peter Laviolette believes the Kings must find new leadership from within as they enter an uncertain new era without Anze Kopitar.", "teams": "Kings", "collected_at": "2026-08-16 19:46:47"}, {"title": "When does 2026 NHL preseason schedule begin? Dates, times and sites", "url": "https://sports.yahoo.com/articles/2026-nhl-preseason-schedule-announced-224648026.html", "source": "Yahoo Sports NHL", "published": "Thu, 13 Aug 2026 22:46:48 +0000", "summary": "The 2026 NHL preseason schedule will be shorter because the regular season is increasing to 84 games. Here are the dates, times and locations.", "teams": null, "collected_at": "2026-08-16 19:46:47"}, {"title": "Colorado Avalanche 2026 Preseason Schedule Revealed: Dates, Opponents and Times", "url": "https://sports.yahoo.com/articles/colorado-avalanche-2026-preseason-schedule-221354044.html", "source": "Yahoo Sports NHL", "published": "Thu, 13 Aug 2026 22:13:54 +0000", "summary": "The Colorado Avalanche now know their four-game preseason path as they prepare for the 2026-27 NHL season and a highly anticipated regular-season opener against the Los Angeles Kings.", "teams": "Avalanche, Kings", "collected_at": "2026-08-16 19:46:47"}, {"title": "Will the Avalanche Be Forced to Let Their Stanley Cup Hero Walk?", "url": "https://sports.yahoo.com/articles/avalanche-forced-let-stanley-cup-220512176.html", "source": "Yahoo Sports NHL", "published": "Thu, 13 Aug 2026 22:05:12 +0000", "summary": "The Avalanche may love what Artturi Lehkonen brings, but his age, injury history and next contract could force Colorado into an incredibly difficult decision.", "teams": "Avalanche", "collected_at": "2026-08-16 19:46:47"}, {"title": "Could Emmitt Finnie Continue Steady Rise and Become Reliable Top-Six Forward in Season 2?", "url": "https://sports.yahoo.com/articles/could-emmitt-finnie-continue-steady-215046156.html", "source": "Yahoo Sports NHL", "published": "Thu, 13 Aug 2026 21:50:46 +0000", "summary": "From seventh-round sleeper to NHL ironman, the Red Wings\u2019 breakout rookie now aims to transform his relentless work ethic into elite production as a cornerstone offensive threat.", "teams": "Red Wings", "collected_at": "2026-08-16 19:46:47"}, {"title": "Brock Nelson Believes The Avalanche Are Hungrier Than Ever", "url": "https://sports.yahoo.com/articles/brock-nelson-believes-avalanche-hungrier-214318733.html", "source": "Yahoo Sports NHL", "published": "Thu, 13 Aug 2026 21:43:18 +0000", "summary": "After Olympic gold, a 1,000th NHL game and a 33-goal season, Brock Nelson has accomplished nearly everything in 2026 \u2014 but the Stanley Cup remains the one trophy he wants most.", "teams": "Avalanche", "collected_at": "2026-08-16 19:46:47"}, {"title": "Live NHL free agency tracker: Contract details for all the latest signings", "url": "https://www.espn.com/nhl/story/_/id/49235590/nhl-free-agency-tracker-2026-contracts-teams-analysis-updates", "source": "ESPN NHL", "published": "Sat, 1 Aug 2026 13:57:26 EST", "summary": "Get up to speed on all the latest veteran additions teams are making beginning on June 30.", "teams": null, "collected_at": "2026-08-16 19:46:46"}, {"title": "Werenski reiterates Jackets' future tied to playoffs", "url": "https://www.espn.com/nhl/story/_/id/49603049/werenski-reiterates-blue-jackets-future-tied-contending", "source": "ESPN NHL", "published": "Thu, 13 Aug 2026 16:55:32 EST", "summary": "Zach Werenski would like to remain with the Columbus Blue Jackets long term, even though there are two seasons left on his current contract.", "teams": "Blue Jackets", "collected_at": "2026-08-16 19:46:46"}, {"title": "Hockey Canada extends international bans for 3", "url": "https://www.espn.com/olympics/hockey/story/_/id/49593415/hockey-canada-extends-bans-stemming-2018-sexual-assault-case", "source": "ESPN NHL", "published": "Wed, 12 Aug 2026 18:05:04 EST", "summary": "Three of the five hockey players acquitted of sexual assault in the 2018 Canada world junior case had their international bans extended for at least another year.", "teams": null, "collected_at": "2026-08-16 19:46:46"}, {"title": "Pens sign Koivunen to 8-year deal worth $32M", "url": "https://www.espn.com/nhl/story/_/id/49545703/penguins-sign-ville-koivunen-8-year-deal-worth-32m", "source": "ESPN NHL", "published": "Thu, 6 Aug 2026 12:22:44 EST", "summary": "The Pittsburgh Penguins made a significant investment in their future on Thursday, signing forward Ville Koivunen to an eight-year contract worth $4 million annually.", "teams": "Penguins", "collected_at": "2026-08-16 19:46:46"}, {"title": "Sharks reward Graf's breakout with 3-year deal", "url": "https://www.espn.com/nhl/story/_/id/49500411/graf-stays-sharks-3-year-deal-worth-1275-million", "source": "ESPN NHL", "published": "Fri, 31 Jul 2026 18:31:44 EST", "summary": "Forward Collin Graf, who had 21 goals and 25 assists in 81 games last season, re-signed with the Sharks on a three-year deal worth $12.75 million.", "teams": "Sharks", "collected_at": "2026-08-16 19:46:46"}, {"title": "Penguins sign Novak to 3-year contract extension", "url": "https://www.espn.com/nhl/story/_/id/49497557/penguins-sign-veteran-forward-tommy-novak-3-year-extension", "source": "ESPN NHL", "published": "Fri, 31 Jul 2026 13:05:22 EST", "summary": "The Pittsburgh Penguins signed dependable forward Tommy Novak to a three-year contract extension on Friday.", "teams": "Penguins", "collected_at": "2026-08-16 19:46:46"}, {"title": "Swedish team rescinds Foote deal amid fan uproar", "url": "https://www.espn.com/nhl/story/_/id/49493480/swedish-elite-league-team-rescinds-foote-deal-amid-fan-uproar", "source": "ESPN NHL", "published": "Thu, 30 Jul 2026 23:31:08 EST", "summary": "F\u00e4rjestad BK of the Swedish Elite League announced Thursday it was not going to honor Cal Foote's contract after conversations with stakeholders.", "teams": null, "collected_at": "2026-08-16 19:46:46"}, {"title": "IIHF bars Russia from 4 tournaments in 2027", "url": "https://www.espn.com/olympics/hockey/story/_/id/49491145/iihf-says-russia-4-world-tournaments-2027", "source": "ESPN NHL", "published": "Thu, 30 Jul 2026 16:38:27 EST", "summary": "The International Ice Hockey Federation said Russia will not be allowed to participate in four tournaments next year after a review by the organization's council.", "teams": null, "collected_at": "2026-08-16 19:46:46"}, {"title": "NHL rookie roundtable: Get to know Gavin McKenna and other top rookies", "url": "https://www.espn.com/nhl/story/_/id/49488419/nhl-rookie-roundtable-gavin-mckenna-porter-martone-other-top-rookies-answer-burning-questions", "source": "ESPN NHL", "published": "Fri, 31 Jul 2026 11:34:10 EST", "summary": "How would you want people to describe your game? Most embarrassing hockey story?  We got the answers to those questions and more from some of the NHL's top rookies.", "teams": null, "collected_at": "2026-08-16 19:46:46"}, {"title": "Goldeneyes GM steps down to fill head coach job", "url": "https://www.espn.com/nhl/story/_/id/49490005/vancouver-goldeneyes-gm-cara-gardner-morey-steps-coach", "source": "ESPN NHL", "published": "Thu, 30 Jul 2026 14:36:25 EST", "summary": "Cara Gardner Morey is stepping down as the Vancouver Goldeneyes GM to fill the team's head-coaching vacancy, the PWHL announced on Thursday.", "teams": "Canucks", "collected_at": "2026-08-16 19:46:46"}, {"title": "No. 1 NHL draft pick McKenna sets rookie goals", "url": "https://www.espn.com/nhl/story/_/id/49482822/no1-2026-nhl-draft-pick-gavin-mckenna-sets-rookie-season-goals", "source": "ESPN NHL", "published": "Fri, 31 Jul 2026 08:10:36 EST", "summary": "Gavin McKenna, the No. 1 pick of the 2026 NHL Draft, outlined his season goals on Wednesday at the NHLPA Rookie Showcase.", "teams": null, "collected_at": "2026-08-16 19:46:46"}, {"title": "Celebrini extension makes him NHL's highest-paid", "url": "https://www.espn.com/nhl/story/_/id/49480184/sharks-sign-macklin-celebrini-five-year-94m-extension", "source": "ESPN NHL", "published": "Wed, 29 Jul 2026 19:04:22 EST", "summary": "The $18.8 million average annual value on his five-year extension will make Macklin Celebrini the highest-paid player in the NHL.", "teams": null, "collected_at": "2026-08-16 19:46:46"}, {"title": "Granato moves into adviser role with Canucks", "url": "https://www.espn.com/nhl/story/_/id/49442127/canucks-cammi-granato-shifts-assistant-gm-adviser-role", "source": "ESPN NHL", "published": "Sat, 25 Jul 2026 14:25:56 EST", "summary": "Hockey Hall of Fame player Cammi Granato is changing roles within the Canucks' front office.", "teams": "Canucks", "collected_at": "2026-08-16 19:46:46"}, {"title": "Blue Jackets, Sillinger agree on 3-year contract", "url": "https://www.espn.com/nhl/story/_/id/49442101/blue-jackets-cole-sillinger-reach-3-year-deal-avoid-arbitration", "source": "ESPN NHL", "published": "Sat, 25 Jul 2026 15:11:36 EST", "summary": "The Blue Jackets avoided arbitration by reaching an agreement to sign forward Cole Sillinger to a three-year, $13.875 million contract.", "teams": "Blue Jackets", "collected_at": "2026-08-16 19:46:46"}, {"title": "Tortorella let down by Vegas call after Final run", "url": "https://www.espn.com/nhl/story/_/id/49441224/tortorella-disappointed-vegas-decision-hopes-next-job", "source": "ESPN NHL", "published": "Fri, 24 Jul 2026 17:54:29 EST", "summary": "John Tortorella admits he was \"disappointed\" by the Golden Knights' decision not to retain him after their surprising run to the Stanley Cup Final but says he is already thinking about another coaching opportunity.", "teams": "Golden Knights", "collected_at": "2026-08-16 19:46:46"}, {"title": "Blue Jackets sign Greaves to 3-year, $15M deal", "url": "https://www.espn.com/nhl/story/_/id/49432970/blue-jackets-sign-goaltender-jet-greaves-3-year-15m-deal", "source": "ESPN NHL", "published": "Thu, 23 Jul 2026 10:47:42 EST", "summary": "The Columbus Blue Jackets have signed goaltender Jet Greaves to a three-year, $15 million contract through the 2028-29 season.", "teams": "Blue Jackets", "collected_at": "2026-08-16 19:46:46"}, {"title": "Kane returns for second stint with Blackhawks", "url": "https://www.espn.com/nhl/story/_/id/49432354/patrick-kane-returns-blackhawks-two-year-contract", "source": "ESPN NHL", "published": "Thu, 23 Jul 2026 19:04:53 EST", "summary": "The Blackhawks and Patrick Kane have agreed to a two-year deal with an average annual value of $8 million as the winger returns to the team where he became an NHL superstar.", "teams": "Blackhawks", "collected_at": "2026-08-16 19:46:46"}, {"title": "Grading preseason bold predictions for all 32 NHL teams", "url": "https://www.espn.com/nhl/story/_/id/49424745/nhl-predictions-playoffs-projections-stanley-cup-awards-stats-trades", "source": "ESPN NHL", "published": "Thu, 23 Jul 2026 06:47:20 EST", "summary": "Steve Yzerman \"failing up?\" Spot on. Rangers returning to the playoffs? Not so much.", "teams": "Rangers", "collected_at": "2026-08-16 19:46:46"}, {"title": "Stars still eye long-term deal with Robertson", "url": "https://www.espn.com/nhl/story/_/id/49428001/stars-gm-says-signing-jason-robertson-long-term-deal-remains-goal", "source": "ESPN NHL", "published": "Wed, 22 Jul 2026 19:27:01 EST", "summary": "Stars GM Jim Nill said signing winger Jason Robertson to a long-term contract remains his goal, after the two sides ended a contentious negotiation with a one-year deal this week.", "teams": "Stars", "collected_at": "2026-08-16 19:46:46"}, {"title": "'LeWinnipegJets': Jets capitalize on the Miami Heat's LeBron presser link mistake", "url": "https://www.espn.com/nhl/story/_/id/49426703/winnipeg-jets-lebron-james-miami-heat-press-conference-link-mistake-fun-troll", "source": "ESPN NHL", "published": "Wed, 22 Jul 2026 22:04:26 EST", "summary": "The Miami Heat's late-night mistake led to an NHL franchise to make some jokes.", "teams": "Jets", "collected_at": "2026-08-16 19:46:46"}, {"title": "Ex-RB Lynch featuring at HDA's SummerFest", "url": "https://www.espn.com/nhl/story/_/id/49423277/marshawn-lynch-special-guest-hda-summerfest", "source": "ESPN NHL", "published": "Wed, 22 Jul 2026 18:04:05 EST", "summary": "The Hockey Diversity Alliance is adding a football element to its youth SummerFest in Toronto this weekend, with former NFL running back Marshawn Lynch serving as a special guest.", "teams": "Maple Leafs", "collected_at": "2026-08-16 19:46:46"}, {"title": "Robertson avoids hearing, takes Stars' $12M deal", "url": "https://www.espn.com/nhl/story/_/id/49421277/stars-keep-cornerstone-jason-robertson-one-year-deal", "source": "ESPN NHL", "published": "Tue, 21 Jul 2026 22:07:34 EST", "summary": "After a season in which he led the club with 96 points, Dallas forward Jason Robertson, who nixed a trade to the Seattle Kraken this summer, avoided a salary arbitration hearing with the Stars, accepting a one-year deal worth $12 million on Tuesday night.", "teams": "Stars, Kraken", "collected_at": "2026-08-16 19:46:46"}];
+
+  const listEl = document.getElementById('article-list');
+  const filtersEl = document.getElementById('filters');
+
+  function timeAgo(isoOrRfc) {
+    if (!isoOrRfc) return '';
+    const d = new Date(isoOrRfc);
+    if (isNaN(d)) return '';
+    const diffMs = Date.now() - d.getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    const days = Math.floor(hrs / 24);
+    return days + 'd ago';
+  }
+
+  function renderArticles(filterTeam) {
+    listEl.innerHTML = '';
+    const filtered = ARTICLES.filter(a => {
+      if (!filterTeam || filterTeam === 'ALL') return true;
+      return (a.teams || '').includes(filterTeam);
+    });
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">No stories for this filter yet.</div>';
+      return;
+    }
+
+    for (const a of filtered) {
+      const el = document.createElement('a');
+      el.className = 'article';
+      el.href = a.url;
+      el.target = '_blank';
+      el.rel = 'noopener noreferrer';
+
+      const teamTags = (a.teams || '')
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean)
+        .map(t => `<span class="team-tag">${t}</span>`)
+        .join('');
+
+      el.innerHTML = `
+        <div class="article-top">
+          <span>${a.source} &middot; ${timeAgo(a.published || a.collected_at)}</span>
+          <span>${teamTags}</span>
+        </div>
+        <div class="article-title">${a.title}</div>
+        <div class="article-summary">${a.summary || ''}</div>
+      `;
+      listEl.appendChild(el);
+    }
+  }
+
+  function buildFilters() {
+    const teamSet = new Set();
+    ARTICLES.forEach(a => {
+      (a.teams || '').split(',').map(t => t.trim()).filter(Boolean).forEach(t => teamSet.add(t));
+    });
+    const teams = ['ALL', ...Array.from(teamSet).sort()];
+
+    filtersEl.innerHTML = '';
+    teams.forEach((team, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'chip' + (i === 0 ? ' active' : '');
+      btn.textContent = team;
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        renderArticles(team === 'ALL' ? null : team);
+      });
+      filtersEl.appendChild(btn);
+    });
+  }
+
+  buildFilters();
+  renderArticles(null);
+</script>
+</body>
+</html>
