@@ -1,7 +1,8 @@
 name: Daily NHL News Collection
 on:
   schedule:
-    - cron: '0 12 * * *'  # 12:00 UTC daily -- adjust for your timezone
+    - cron: '0 12 * * *'  # ~8:00 AM Eastern (EDT, UTC-4)
+    - cron: '0 22 * * *'  # ~6:00 PM Eastern (EDT, UTC-4)
   workflow_dispatch: {}    # lets you trigger it manually too
 
 permissions:
