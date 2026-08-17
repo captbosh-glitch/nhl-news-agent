@@ -13,6 +13,120 @@ from datetime import datetime
 
 import db
 
+# Primary brand color per team, keyed to match the team names used as tags
+# in collector.py's TEAM_KEYWORDS.
+TEAM_COLORS = {
+    "Bruins": "#FFB81C",
+    "Sabres": "#002654",
+    "Red Wings": "#CE1126",
+    "Panthers": "#C8102E",
+    "Canadiens": "#AF1E2D",
+    "Senators": "#C52032",
+    "Lightning": "#002868",
+    "Maple Leafs": "#00205B",
+    "Hurricanes": "#CC0000",
+    "Blue Jackets": "#002654",
+    "Devils": "#CE1126",
+    "Islanders": "#00539B",
+    "Rangers": "#0038A8",
+    "Flyers": "#F74902",
+    "Penguins": "#FCB514",
+    "Capitals": "#C8102E",
+    "Blackhawks": "#CF0A2C",
+    "Avalanche": "#6F263D",
+    "Stars": "#006847",
+    "Wild": "#154734",
+    "Predators": "#FFB81C",
+    "Blues": "#002F87",
+    "Jets": "#041E42",
+    "Coyotes": "#8C2633",
+    "Ducks": "#F47A38",
+    "Flames": "#C8102E",
+    "Oilers": "#FF4C00",
+    "Kings": "#A2AAAD",
+    "Sharks": "#006D75",
+    "Kraken": "#355464",
+    "Canucks": "#00205B",
+    "Golden Knights": "#B4975A",
+}
+
+PAGE_BG_RGB = (10, 14, 19)  # matches --bg in the template CSS
+WCAG_AA_TARGET = 4.5
+
+
+def _hex_to_rgb(hex_color):
+    h = hex_color.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _rgb_to_hex(rgb):
+    return "#{:02X}{:02X}{:02X}".format(*[max(0, min(255, round(c))) for c in rgb])
+
+
+def _relative_luminance(rgb):
+    def chan(c):
+        c = c / 255.0
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = rgb
+    return 0.2126 * chan(r) + 0.7152 * chan(g) + 0.0722 * chan(b)
+
+
+def _contrast_ratio(rgb1, rgb2):
+    l1, l2 = _relative_luminance(rgb1), _relative_luminance(rgb2)
+    lighter, darker = max(l1, l2), min(l1, l2)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def _mix_with_white(rgb, amount):
+    return tuple(c + (255 - c) * amount for c in rgb)
+
+
+def _lighten_until_contrast(rgb, bg_rgb, target=WCAG_AA_TARGET, max_amount=0.92):
+    """Blend a color toward white in small steps until it reaches the target
+    WCAG contrast ratio against bg_rgb, or hits a safety ceiling."""
+    if _contrast_ratio(rgb, bg_rgb) >= target:
+        return rgb
+    amount = 0.0
+    while amount < max_amount:
+        amount += 0.02
+        candidate = _mix_with_white(rgb, amount)
+        if _contrast_ratio(candidate, bg_rgb) >= target:
+            return candidate
+    return _mix_with_white(rgb, max_amount)
+
+
+def _best_text_color(bg_rgb):
+    """Pick whichever of white or near-black gives better contrast against
+    a given background color."""
+    white, dark = (255, 255, 255), PAGE_BG_RGB
+    return white if _contrast_ratio(bg_rgb, white) >= _contrast_ratio(bg_rgb, dark) else dark
+
+
+def _build_accessible_color_maps():
+    """
+    Derives three WCAG-AA-safe (4.5:1+) color maps from TEAM_COLORS:
+
+    - chip_colors: each team's color, lightened if needed, for use as text/
+      border on the dark page background (used by inactive filter chips and
+      article team tags).
+    - active_text: white or near-black, whichever contrasts better as TEXT
+      sitting on top of that team's true color (used when a filter chip is
+      the active/selected one, with a solid team-color background).
+    - tag_bg: a translucent (15% alpha) rgba() tint of each team's true
+      color, for article-card team tag backgrounds.
+    """
+    chip_colors, active_text, tag_bg = {}, {}, {}
+    for team, hex_color in TEAM_COLORS.items():
+        rgb = _hex_to_rgb(hex_color)
+        chip_colors[team] = _rgb_to_hex(_lighten_until_contrast(rgb, PAGE_BG_RGB))
+        text_rgb = _best_text_color(rgb)
+        active_text[team] = "#FFFFFF" if text_rgb == (255, 255, 255) else "#0A0E13"
+        tag_bg[team] = f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.15)"
+    return chip_colors, active_text, tag_bg
+
+
+TEAM_CHIP_COLORS, TEAM_ACTIVE_TEXT, TEAM_TAG_BG = _build_accessible_color_maps()
+
 
 TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -164,23 +278,23 @@ TEMPLATE = """<!DOCTYPE html>
     letter-spacing: 0.03em;
     padding: 7px 13px;
     border-radius: 6px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--chip-color, var(--border));
     background: transparent;
-    color: var(--text-dim);
+    color: var(--chip-color, var(--text-dim));
     cursor: pointer;
     transition: all 0.15s ease;
     text-transform: uppercase;
   }}
 
   .chip:hover {{
-    border-color: var(--ice);
+    border-color: var(--chip-color, var(--ice));
     color: var(--text);
   }}
 
   .chip.active {{
-    background: var(--ice);
-    border-color: var(--ice);
-    color: #0A0E13;
+    background: var(--chip-active-bg, var(--ice));
+    border-color: var(--chip-active-bg, var(--ice));
+    color: var(--chip-active-text, #0A0E13);
     font-weight: 700;
   }}
 
@@ -246,8 +360,8 @@ TEMPLATE = """<!DOCTYPE html>
     display: inline-block;
     padding: 2px 8px;
     border-radius: 4px;
-    background: rgba(79, 195, 247, 0.12);
-    color: var(--ice);
+    background: var(--tag-bg, rgba(79, 195, 247, 0.12));
+    color: var(--tag-color, var(--ice));
     font-size: 10.5px;
     margin-left: 6px;
   }}
@@ -290,6 +404,10 @@ TEMPLATE = """<!DOCTYPE html>
 
 <script>
   const ARTICLES = {articles_json};
+  const TEAM_COLORS = {team_colors_json};
+  const TEAM_CHIP_COLORS = {team_chip_colors_json};
+  const TEAM_ACTIVE_TEXT = {team_active_text_json};
+  const TEAM_TAG_BG = {team_tag_bg_json};
 
   // Render the "last updated" clock in the *visitor's* local timezone,
   // not the server's (the page is generated on a UTC server, but each
@@ -348,7 +466,14 @@ TEMPLATE = """<!DOCTYPE html>
         .split(',')
         .map(t => t.trim())
         .filter(Boolean)
-        .map(t => `<span class="team-tag">${{t}}</span>`)
+        .map(t => {{
+          const color = TEAM_CHIP_COLORS[t];
+          const bg = TEAM_TAG_BG[t];
+          const style = color && bg
+            ? ` style="--tag-color: ${{color}}; --tag-bg: ${{bg}};"`
+            : '';
+          return `<span class="team-tag"${{style}}>${{t}}</span>`;
+        }})
         .join('');
 
       el.innerHTML = `
@@ -375,6 +500,11 @@ TEMPLATE = """<!DOCTYPE html>
       const btn = document.createElement('button');
       btn.className = 'chip' + (i === 0 ? ' active' : '');
       btn.textContent = team;
+      if (team !== 'ALL' && TEAM_CHIP_COLORS[team]) {{
+        btn.style.setProperty('--chip-color', TEAM_CHIP_COLORS[team]);
+        btn.style.setProperty('--chip-active-bg', TEAM_COLORS[team]);
+        btn.style.setProperty('--chip-active-text', TEAM_ACTIVE_TEXT[team]);
+      }}
       btn.addEventListener('click', () => {{
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
@@ -429,6 +559,10 @@ def generate(output_path="dashboard.html"):
         generated_at_iso=datetime.utcnow().isoformat() + "Z",
         digest_html=build_digest_html(digest_row),
         articles_json=json.dumps(articles_list),
+        team_colors_json=json.dumps(TEAM_COLORS),
+        team_chip_colors_json=json.dumps(TEAM_CHIP_COLORS),
+        team_active_text_json=json.dumps(TEAM_ACTIVE_TEXT),
+        team_tag_bg_json=json.dumps(TEAM_TAG_BG),
     )
 
     with open(output_path, "w") as f:
