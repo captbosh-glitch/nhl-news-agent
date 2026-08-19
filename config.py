@@ -1,21 +1,31 @@
 """
-Configuration for the NHL news collector.
-Add/remove RSS feed URLs here as you find more/better sources.
+Configuration for the multi-sport news collector.
+Add/remove RSS feed URLs per sport here as you find more/better sources.
 """
 
+# Each sport has its own set of RSS sources. Add a new sport by adding a
+# new top-level key here (plus a matching TEAM_KEYWORDS block in
+# collector.py) -- everything else (db, digest, dashboard tabs) picks it
+# up automatically.
 RSS_SOURCES = {
-    # NHL.com stopped publishing a native RSS feed some time ago. This is a
-    # well-known open-source proxy that regenerates one live from nhl.com/news
-    # (see https://github.com/clokep/nhl-news-rss). Verified working.
-    "NHL.com": "https://www.to-rss.xyz/nhl/news/",
-    "ESPN NHL": "https://www.espn.com/espn/rss/nhl/news",
-    "Sportsnet NHL": "https://www.sportsnet.ca/hockey/nhl/feed/",
-    "Yahoo Sports NHL": "https://sports.yahoo.com/nhl/rss.xml",
-    # TSN's public RSS feed appears to be discontinued as of writing --
-    # dropped for now. Add a replacement here if you find a working one.
+    "NHL": {
+        # NHL.com stopped publishing a native RSS feed some time ago. This
+        # is a well-known open-source proxy that regenerates one live from
+        # nhl.com/news (see https://github.com/clokep/nhl-news-rss).
+        "NHL.com": "https://www.to-rss.xyz/nhl/news/",
+        "ESPN NHL": "https://www.espn.com/espn/rss/nhl/news",
+        "Sportsnet NHL": "https://www.sportsnet.ca/hockey/nhl/feed/",
+        "Yahoo Sports NHL": "https://sports.yahoo.com/nhl/rss.xml",
+        # TSN's public RSS feed appears to be discontinued -- dropped.
+    },
+    "NFL": {
+        # Both verified working directly.
+        "ESPN NFL": "https://www.espn.com/espn/rss/nfl/news",
+        "Yahoo Sports NFL": "https://sports.yahoo.com/nfl/rss.xml",
+    },
 }
 
-DB_PATH = "nhl_news.db"
+DB_PATH = "nhl_news.db"  # kept as-is (not renamed) so existing collected data isn't orphaned
 
 # Set this in your environment (export ANTHROPIC_API_KEY=...) to enable
 # the optional daily digest / curation step. If unset, the collector

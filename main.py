@@ -15,7 +15,7 @@ from collector import collect_new_articles
 
 
 def main():
-    print(f"=== NHL news collection run: {datetime.now().isoformat()} ===")
+    print(f"=== Sports news collection run: {datetime.now().isoformat()} ===")
 
     db.init_db()
 

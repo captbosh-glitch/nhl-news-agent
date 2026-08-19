@@ -1,8 +1,8 @@
 """
 Generates a static HTML dashboard (dashboard.html) from the collected
-NHL news data. Run this any time after main.py to refresh the page --
-or call generate() from main.py to regenerate it automatically after
-every collection run.
+multi-sport news data. Run this any time after main.py to refresh the
+page -- or call generate() from main.py to regenerate it automatically
+after every collection run.
 
 Usage:
     python generate_page.py
@@ -12,42 +12,83 @@ import json
 from datetime import datetime
 
 import db
+from collector import TEAM_KEYWORDS
 
-# Primary brand color per team, keyed to match the team names used as tags
-# in collector.py's TEAM_KEYWORDS.
-TEAM_COLORS = {
-    "Bruins": "#FFB81C",
-    "Sabres": "#002654",
-    "Red Wings": "#CE1126",
-    "Panthers": "#C8102E",
-    "Canadiens": "#AF1E2D",
-    "Senators": "#C52032",
-    "Lightning": "#002868",
-    "Maple Leafs": "#00205B",
-    "Hurricanes": "#CC0000",
-    "Blue Jackets": "#002654",
-    "Devils": "#CE1126",
-    "Islanders": "#00539B",
-    "Rangers": "#0038A8",
-    "Flyers": "#F74902",
-    "Penguins": "#FCB514",
-    "Capitals": "#C8102E",
-    "Blackhawks": "#CF0A2C",
-    "Avalanche": "#6F263D",
-    "Stars": "#006847",
-    "Wild": "#154734",
-    "Predators": "#FFB81C",
-    "Blues": "#002F87",
-    "Jets": "#041E42",
-    "Coyotes": "#8C2633",
-    "Ducks": "#F47A38",
-    "Flames": "#C8102E",
-    "Oilers": "#FF4C00",
-    "Kings": "#A2AAAD",
-    "Sharks": "#006D75",
-    "Kraken": "#355464",
-    "Canucks": "#00205B",
-    "Golden Knights": "#B4975A",
+SPORTS = list(TEAM_KEYWORDS.keys())  # e.g. ["NHL", "NFL"]
+
+# Primary brand color per team, nested by sport (mirroring
+# collector.py's TEAM_KEYWORDS structure). Nesting by sport -- rather than
+# one flat dict -- matters because team NAMES can collide across leagues
+# (both the NHL's Florida Panthers and the NFL's Carolina Panthers are
+# just "Panthers"), so a flat dict would silently merge their colors.
+TEAM_COLORS_BY_SPORT = {
+    "NHL": {
+        "Bruins": "#FFB81C",
+        "Sabres": "#002654",
+        "Red Wings": "#CE1126",
+        "Panthers": "#C8102E",
+        "Canadiens": "#AF1E2D",
+        "Senators": "#C52032",
+        "Lightning": "#002868",
+        "Maple Leafs": "#00205B",
+        "Hurricanes": "#CC0000",
+        "Blue Jackets": "#002654",
+        "Devils": "#CE1126",
+        "Islanders": "#00539B",
+        "Rangers": "#0038A8",
+        "Flyers": "#F74902",
+        "Penguins": "#FCB514",
+        "Capitals": "#C8102E",
+        "Blackhawks": "#CF0A2C",
+        "Avalanche": "#6F263D",
+        "Stars": "#006847",
+        "Wild": "#154734",
+        "Predators": "#FFB81C",
+        "Blues": "#002F87",
+        "Jets": "#041E42",
+        "Coyotes": "#8C2633",
+        "Ducks": "#F47A38",
+        "Flames": "#C8102E",
+        "Oilers": "#FF4C00",
+        "Kings": "#A2AAAD",
+        "Sharks": "#006D75",
+        "Kraken": "#355464",
+        "Canucks": "#00205B",
+        "Golden Knights": "#B4975A",
+    },
+    "NFL": {
+        "Cardinals": "#97233F",
+        "Falcons": "#A71930",
+        "Ravens": "#241773",
+        "Bills": "#00338D",
+        "Panthers": "#0085CA",
+        "Bears": "#0B162A",
+        "Bengals": "#FB4F14",
+        "Browns": "#311D00",
+        "Cowboys": "#041E42",
+        "Broncos": "#FB4F14",
+        "Lions": "#0076B6",
+        "Packers": "#203731",
+        "Texans": "#03202F",
+        "Colts": "#002C5F",
+        "Jaguars": "#101820",
+        "Chiefs": "#E31837",
+        "Raiders": "#4A4A4A",  # lightened from black for visibility as a UI accent
+        "Chargers": "#0080C6",
+        "Rams": "#003594",
+        "Dolphins": "#008E97",
+        "Vikings": "#4F2683",
+        "Patriots": "#002244",
+        "Saints": "#7A6628",  # darkened from gold for contrast as a UI accent
+        "Giants": "#0B2265",
+        "Eagles": "#004C54",
+        "Steelers": "#B8860B",  # darkened from bright yellow for contrast as a UI accent
+        "49ers": "#AA0000",
+        "Seahawks": "#002244",
+        "Buccaneers": "#D50A0A",
+        "Titans": "#0C2340",
+        "Commanders": "#5A1414",
+    },
 }
 
 PAGE_BG_RGB = (10, 14, 19)  # matches --bg in the template CSS
@@ -104,24 +145,25 @@ def _best_text_color(bg_rgb):
 
 def _build_accessible_color_maps():
     """
-    Derives three WCAG-AA-safe (4.5:1+) color maps from TEAM_COLORS:
+    Derives three WCAG-AA-safe (4.5:1+) color maps from TEAM_COLORS_BY_SPORT,
+    nested by sport same as the input:
 
-    - chip_colors: each team's color, lightened if needed, for use as text/
-      border on the dark page background (used by inactive filter chips and
-      article team tags).
-    - active_text: white or near-black, whichever contrasts better as TEXT
-      sitting on top of that team's true color (used when a filter chip is
-      the active/selected one, with a solid team-color background).
-    - tag_bg: a translucent (15% alpha) rgba() tint of each team's true
-      color, for article-card team tag backgrounds.
+    - chip_colors[sport][team]: lightened-if-needed color for text/border
+      on the dark page background (inactive filter chips, article tags).
+    - active_text[sport][team]: white or near-black, whichever contrasts
+      better as text sitting on that team's true color (active chip state).
+    - tag_bg[sport][team]: a translucent (15% alpha) rgba() tint of the
+      team's true color, for article-card team tag backgrounds.
     """
     chip_colors, active_text, tag_bg = {}, {}, {}
-    for team, hex_color in TEAM_COLORS.items():
-        rgb = _hex_to_rgb(hex_color)
-        chip_colors[team] = _rgb_to_hex(_lighten_until_contrast(rgb, PAGE_BG_RGB))
-        text_rgb = _best_text_color(rgb)
-        active_text[team] = "#FFFFFF" if text_rgb == (255, 255, 255) else "#0A0E13"
-        tag_bg[team] = f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.15)"
+    for sport, teams in TEAM_COLORS_BY_SPORT.items():
+        chip_colors[sport], active_text[sport], tag_bg[sport] = {}, {}, {}
+        for team, hex_color in teams.items():
+            rgb = _hex_to_rgb(hex_color)
+            chip_colors[sport][team] = _rgb_to_hex(_lighten_until_contrast(rgb, PAGE_BG_RGB))
+            text_rgb = _best_text_color(rgb)
+            active_text[sport][team] = "#FFFFFF" if text_rgb == (255, 255, 255) else "#0A0E13"
+            tag_bg[sport][team] = f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.15)"
     return chip_colors, active_text, tag_bg
 
 
@@ -133,7 +175,7 @@ TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NHL News Desk</title>
+<title>Sports Desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -216,9 +258,39 @@ TEMPLATE = """<!DOCTYPE html>
     letter-spacing: 0.04em;
   }}
 
+  /* --- Sport tabs --- */
+  .tabs {{
+    display: flex;
+    gap: 4px;
+    margin-top: 20px;
+    border-bottom: 2px solid var(--border);
+  }}
+
+  .tab {{
+    font-family: 'Teko', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 8px 18px 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }}
+
+  .tab:hover {{ color: var(--text); }}
+
+  .tab.active {{
+    color: var(--ice);
+    border-bottom-color: var(--ice);
+  }}
+
   /* --- Digest hero --- */
   .digest {{
-    margin-top: 28px;
+    margin-top: 24px;
     padding: 24px 24px 26px;
     background: var(--panel);
     border: 1px solid var(--border);
@@ -339,6 +411,12 @@ TEMPLATE = """<!DOCTYPE html>
     letter-spacing: 0.03em;
   }}
 
+  .sport-badge {{
+    color: var(--ice);
+    font-weight: 700;
+    margin-right: 6px;
+  }}
+
   .article-title {{
     font-size: 15.5px;
     font-weight: 600;
@@ -373,6 +451,8 @@ TEMPLATE = """<!DOCTYPE html>
     font-size: 14px;
   }}
 
+  .hidden {{ display: none !important; }}
+
   @media (max-width: 480px) {{
     .digest h1 {{ font-size: 32px; }}
     .scoreboard {{ padding: 12px 16px; margin: 0 -16px; }}
@@ -386,24 +466,27 @@ TEMPLATE = """<!DOCTYPE html>
   <div class="scoreboard">
     <div class="scoreboard-left">
       <span class="goal-light" aria-hidden="true"></span>
-      NHL News Desk
+      Sports Desk
     </div>
     <div class="scoreboard-clock" id="scoreboard-clock" data-generated="{generated_at_iso}">Loading...</div>
   </div>
 
-  <div class="digest">
+  <div class="tabs" id="tabs"></div>
+
+  <div id="home-digest" class="digest">
     {digest_html}
   </div>
 
-  <div class="filters" id="filters"></div>
+  <div class="filters hidden" id="filters"></div>
 
-  <div class="section-label">Collected stories</div>
+  <div class="section-label" id="section-label">Collected stories</div>
   <div id="article-list"></div>
 
 </div>
 
 <script>
   const ARTICLES = {articles_json};
+  const SPORTS = {sports_json};
   const TEAM_COLORS = {team_colors_json};
   const TEAM_CHIP_COLORS = {team_chip_colors_json};
   const TEAM_ACTIVE_TEXT = {team_active_text_json};
@@ -429,6 +512,9 @@ TEMPLATE = """<!DOCTYPE html>
 
   const listEl = document.getElementById('article-list');
   const filtersEl = document.getElementById('filters');
+  const digestEl = document.getElementById('home-digest');
+  const sectionLabelEl = document.getElementById('section-label');
+  const tabsEl = document.getElementById('tabs');
 
   function timeAgo(isoOrRfc) {{
     if (!isoOrRfc) return '';
@@ -443,79 +529,133 @@ TEMPLATE = """<!DOCTYPE html>
     return days + 'd ago';
   }}
 
-  function renderArticles(filterTeam) {{
-    listEl.innerHTML = '';
-    const filtered = ARTICLES.filter(a => {{
-      if (!filterTeam || filterTeam === 'ALL') return true;
-      return (a.teams || '').includes(filterTeam);
-    }});
-
-    if (filtered.length === 0) {{
-      listEl.innerHTML = '<div class="empty-state">No stories for this filter yet.</div>';
-      return;
-    }}
-
-    for (const a of filtered) {{
-      const el = document.createElement('a');
-      el.className = 'article';
-      el.href = a.url;
-      el.target = '_blank';
-      el.rel = 'noopener noreferrer';
-
-      const teamTags = (a.teams || '')
-        .split(',')
-        .map(t => t.trim())
-        .filter(Boolean)
-        .map(t => {{
-          const color = TEAM_CHIP_COLORS[t];
-          const bg = TEAM_TAG_BG[t];
-          const style = color && bg
-            ? ` style="--tag-color: ${{color}}; --tag-bg: ${{bg}};"`
-            : '';
-          return `<span class="team-tag"${{style}}>${{t}}</span>`;
-        }})
-        .join('');
-
-      el.innerHTML = `
-        <div class="article-top">
-          <span>${{a.source}} &middot; ${{timeAgo(a.published || a.collected_at)}}</span>
-          <span>${{teamTags}}</span>
-        </div>
-        <div class="article-title">${{a.title}}</div>
-        <div class="article-summary">${{a.summary || ''}}</div>
-      `;
-      listEl.appendChild(el);
-    }}
+  // sport is required here (not inferred) because team names like
+  // "Panthers" exist in more than one league -- always look colors up
+  // scoped to the specific sport a given article/chip belongs to.
+  function teamTagsHtml(teamsStr, sport) {{
+    return (teamsStr || '')
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean)
+      .map(t => {{
+        const color = (TEAM_CHIP_COLORS[sport] || {{}})[t];
+        const bg = (TEAM_TAG_BG[sport] || {{}})[t];
+        const style = color && bg
+          ? ` style="--tag-color: ${{color}}; --tag-bg: ${{bg}};"`
+          : '';
+        return `<span class="team-tag"${{style}}>${{t}}</span>`;
+      }})
+      .join('');
   }}
 
-  function buildFilters() {{
+  function renderArticleCard(a, showSportBadge) {{
+    const el = document.createElement('a');
+    el.className = 'article';
+    el.href = a.url;
+    el.target = '_blank';
+    el.rel = 'noopener noreferrer';
+
+    const sportBadge = showSportBadge ? `<span class="sport-badge">${{a.sport}}</span>` : '';
+
+    el.innerHTML = `
+      <div class="article-top">
+        <span>${{sportBadge}}${{a.source}} &middot; ${{timeAgo(a.published || a.collected_at)}}</span>
+        <span>${{teamTagsHtml(a.teams, a.sport)}}</span>
+      </div>
+      <div class="article-title">${{a.title}}</div>
+      <div class="article-summary">${{a.summary || ''}}</div>
+    `;
+    return el;
+  }}
+
+  function renderHome() {{
+    digestEl.classList.remove('hidden');
+    filtersEl.classList.add('hidden');
+    sectionLabelEl.textContent = 'Latest across all sports';
+
+    listEl.innerHTML = '';
+    const recent = ARTICLES.slice(0, 30);
+    if (recent.length === 0) {{
+      listEl.innerHTML = '<div class="empty-state">No stories collected yet.</div>';
+      return;
+    }}
+    recent.forEach(a => listEl.appendChild(renderArticleCard(a, true)));
+  }}
+
+  function renderSport(sport, filterTeam) {{
+    digestEl.classList.add('hidden');
+    filtersEl.classList.remove('hidden');
+    sectionLabelEl.textContent = sport + ' stories';
+
+    const sportArticles = ARTICLES.filter(a => a.sport === sport);
+    const chipColors = TEAM_CHIP_COLORS[sport] || {{}};
+    const trueColors = TEAM_COLORS[sport] || {{}};
+    const activeText = TEAM_ACTIVE_TEXT[sport] || {{}};
+
+    // Build filter chips scoped to just this sport's teams
     const teamSet = new Set();
-    ARTICLES.forEach(a => {{
+    sportArticles.forEach(a => {{
       (a.teams || '').split(',').map(t => t.trim()).filter(Boolean).forEach(t => teamSet.add(t));
     }});
     const teams = ['ALL', ...Array.from(teamSet).sort()];
 
     filtersEl.innerHTML = '';
-    teams.forEach((team, i) => {{
+    teams.forEach(team => {{
       const btn = document.createElement('button');
-      btn.className = 'chip' + (i === 0 ? ' active' : '');
+      const isActive = (team === 'ALL' && !filterTeam) || team === filterTeam;
+      btn.className = 'chip' + (isActive ? ' active' : '');
       btn.textContent = team;
-      if (team !== 'ALL' && TEAM_CHIP_COLORS[team]) {{
-        btn.style.setProperty('--chip-color', TEAM_CHIP_COLORS[team]);
-        btn.style.setProperty('--chip-active-bg', TEAM_COLORS[team]);
-        btn.style.setProperty('--chip-active-text', TEAM_ACTIVE_TEXT[team]);
+      if (team !== 'ALL' && chipColors[team]) {{
+        btn.style.setProperty('--chip-color', chipColors[team]);
+        btn.style.setProperty('--chip-active-bg', trueColors[team]);
+        btn.style.setProperty('--chip-active-text', activeText[team]);
       }}
       btn.addEventListener('click', () => {{
-        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        renderArticles(team === 'ALL' ? null : team);
+        renderSport(sport, team === 'ALL' ? null : team);
       }});
       filtersEl.appendChild(btn);
     }});
+
+    const filtered = sportArticles.filter(a => {{
+      if (!filterTeam) return true;
+      return (a.teams || '').includes(filterTeam);
+    }});
+
+    listEl.innerHTML = '';
+    if (filtered.length === 0) {{
+      listEl.innerHTML = '<div class="empty-state">No stories for this filter yet.</div>';
+      return;
+    }}
+    filtered.forEach(a => listEl.appendChild(renderArticleCard(a, false)));
   }}
 
-  buildFilters();
-  renderArticles(null);
+  function switchTab(sport) {{
+    document.querySelectorAll('.tab').forEach(t => {{
+      t.classList.toggle('active', t.dataset.sport === sport);
+    }});
+
+    if (sport === 'Home') {{
+      renderHome();
+    }} else {{
+      renderSport(sport, null);
+    }}
+  }}
+
+  function buildTabs() {{
+    const tabNames = ['Home', ...SPORTS];
+    tabsEl.innerHTML = '';
+    tabNames.forEach(sport => {{
+      const btn = document.createElement('button');
+      btn.className = 'tab' + (sport === 'Home' ? ' active' : '');
+      btn.textContent = sport;
+      btn.dataset.sport = sport;
+      btn.addEventListener('click', () => switchTab(sport));
+      tabsEl.appendChild(btn);
+    }});
+  }}
+
+  buildTabs();
+  switchTab('Home');
 </script>
 </body>
 </html>
@@ -528,8 +668,8 @@ def build_digest_html(digest_row):
             '<div class="digest-eyebrow">Today\'s Digest</div>'
             '<h1>No digest yet</h1>'
             '<div class="no-digest">Run main.py with ANTHROPIC_API_KEY set to '
-            'generate a curated daily digest. Raw collected stories are still '
-            'listed below.</div>'
+            'generate a curated daily digest across all sports. Raw collected '
+            'stories are still available under each sport\'s tab.</div>'
         )
 
     return (
@@ -537,7 +677,8 @@ def build_digest_html(digest_row):
         f'{digest_row["digest_date"]}</div>'
         f'<h1>Today\'s Digest</h1>'
         f'<p>{digest_row["digest_text"]}</p>'
-        f'<div class="digest-meta">Curated from {digest_row["article_count"]} stories</div>'
+        f'<div class="digest-meta">Curated from {digest_row["article_count"]} stories '
+        'across all sports</div>'
     )
 
 
@@ -549,8 +690,8 @@ def generate(output_path="dashboard.html"):
         ).fetchone()
 
         articles = conn.execute(
-            "SELECT title, url, source, published, summary, teams, collected_at "
-            "FROM articles ORDER BY collected_at DESC LIMIT 300"
+            "SELECT title, url, source, published, summary, teams, sport, collected_at "
+            "FROM articles ORDER BY collected_at DESC LIMIT 500"
         ).fetchall()
 
     articles_list = [dict(a) for a in articles]
@@ -559,7 +700,8 @@ def generate(output_path="dashboard.html"):
         generated_at_iso=datetime.utcnow().isoformat() + "Z",
         digest_html=build_digest_html(digest_row),
         articles_json=json.dumps(articles_list),
-        team_colors_json=json.dumps(TEAM_COLORS),
+        sports_json=json.dumps(SPORTS),
+        team_colors_json=json.dumps(TEAM_COLORS_BY_SPORT),
         team_chip_colors_json=json.dumps(TEAM_CHIP_COLORS),
         team_active_text_json=json.dumps(TEAM_ACTIVE_TEXT),
         team_tag_bg_json=json.dumps(TEAM_TAG_BG),
