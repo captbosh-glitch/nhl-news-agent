@@ -574,7 +574,17 @@ TEMPLATE = """<!DOCTYPE html>
     sectionLabelEl.textContent = 'Latest across all sports';
 
     listEl.innerHTML = '';
-    const recent = ARTICLES.slice(0, 30);
+    // Sort by the article's real publish time (falling back to when it
+    // was collected, if publish date is missing/unparseable) rather than
+    // relying on collection order -- otherwise a single run's batch (e.g.
+    // "all of NHL's sources, then all of NFL's") clusters together
+    // instead of genuinely interleaving by recency.
+    const sorted = ARTICLES.slice().sort((a, b) => {{
+      const dateA = new Date(a.published || a.collected_at);
+      const dateB = new Date(b.published || b.collected_at);
+      return dateB - dateA;
+    }});
+    const recent = sorted.slice(0, 30);
     if (recent.length === 0) {{
       listEl.innerHTML = '<div class="empty-state">No stories collected yet.</div>';
       return;
