@@ -23,6 +23,12 @@ RSS_SOURCES = {
         "ESPN NFL": "https://www.espn.com/espn/rss/nfl/news",
         "Yahoo Sports NFL": "https://sports.yahoo.com/nfl/rss.xml",
     },
+    "MLB": {
+        # Both verified working directly (CBS Sports especially -- pulled
+        # real same-day articles when tested).
+        "ESPN MLB": "https://www.espn.com/espn/rss/mlb/news",
+        "CBS Sports MLB": "https://www.cbssports.com/rss/headlines/mlb",
+    },
 }
 
 DB_PATH = "nhl_news.db"  # kept as-is (not renamed) so existing collected data isn't orphaned
