@@ -29,6 +29,11 @@ RSS_SOURCES = {
         "ESPN MLB": "https://www.espn.com/espn/rss/mlb/news",
         "CBS Sports MLB": "https://www.cbssports.com/rss/headlines/mlb",
     },
+    "NBA": {
+        # Both verified working directly.
+        "ESPN NBA": "https://www.espn.com/espn/rss/nba/news",
+        "CBS Sports NBA": "https://www.cbssports.com/rss/headlines/nba/",
+    },
 }
 
 DB_PATH = "nhl_news.db"  # kept as-is (not renamed) so existing collected data isn't orphaned
